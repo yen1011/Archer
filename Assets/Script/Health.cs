@@ -1,5 +1,7 @@
 using UnityEngine;
 using System;
+using TMPro;
+
 
 public enum Team2D { Player, Bot }
 
@@ -46,6 +48,13 @@ public class Health : MonoBehaviour
     public string shieldBoolParam = "";    // Animator Bool 파라미터명(있으면 사용)
 
     public event Action<Health> OnDied;
+
+    [Header("HP Text (optional)")]
+    public TMP_Text hpText;           // HP 숫자 출력용 (월드 TMP 또는 TMP UGUI)
+    public bool showMaxInText = true; // "현재/최대" 표기
+    public bool showPercent = false;  // 퍼센트로 표시 (정수%)
+    public bool hideTextWhenFull = false; // 풀HP면 텍스트 숨김
+
 
     bool isDead;
     float lastHurtTime;
@@ -169,14 +178,38 @@ public class Health : MonoBehaviour
         UpdateHPBar();
     }
 
-    void UpdateHPBar()
+    private void UpdateHPBar()
     {
-        if (!hpLine) return;
-        float t = (maxHP > 0) ? (float)hp / maxHP : 0f;
-        if (t < 0.0001f) t = 0f; // 잔여 픽셀 제거
-        var s = hpLineBaseScale; s.x = hpLineBaseScale.x * t;
-        hpLine.localScale = s;
+        if (hpLine)
+        {
+            float t = (maxHP > 0) ? (float)hp / maxHP : 0f;
+            var s = hpLineBaseScale; s.x = hpLineBaseScale.x * t;
+            hpLine.localScale = s;
+        }
+
+        if (hpText)
+        {
+            if (hideTextWhenFull && hp >= maxHP)
+            {
+                hpText.enabled = false;
+            }
+            else
+            {
+                hpText.enabled = true;
+
+                if (showPercent)
+                {
+                    int pct = (maxHP > 0) ? Mathf.RoundToInt(100f * hp / maxHP) : 0;
+                    hpText.text = pct + "%";
+                }
+                else
+                {
+                    hpText.text = showMaxInText ? $"{hp}/{maxHP}" : hp.ToString();
+                }
+            }
+        }
     }
+
 
     void ShowBlockPopup()
     {
